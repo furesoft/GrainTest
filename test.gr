@@ -87,5 +87,5 @@ provide let assertTrue = (state, actual) => {
 }
 
 provide let assertFalse = (state, actual) => {
-    pushAssertion(state, actual, "expected to be 'false' but was 'true'")
+    pushAssertion(state, !actual, "expected to be 'false' but was 'true'")
 }
