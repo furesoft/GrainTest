@@ -1,0 +1,38 @@
+module Test
+
+from "string" include String
+from "list" include List
+
+provide record TestDefinition {
+    name: String,
+    assertions: 
+}
+
+provide let def = (name, callback) => { 
+    let state = {
+        name: name,
+        assertions: []
+    }
+
+    let result = callback(state)
+    
+    let result = match(result) {
+        Ok(v) => "were successfull",
+        Err(e) => String.concat(" failed: ", e)
+    }
+
+    print(String.concat(String.concat("Test ", name), result))
+}
+
+provide let assertEq = (state, expected, actual) => {
+    let check = () => {
+        if(expected == actual) {
+            Ok(true)
+        }
+        else {
+            Err("expected != actual")
+        }
+    }
+
+    Buffer.add(check, state.assertions)
+}
