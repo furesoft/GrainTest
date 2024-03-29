@@ -4,6 +4,7 @@ from "string" include String
 from "stack" include Stack
 from "map" include Map
 from "option" include Option
+from "buffer" include Buffer
 
 provide record TestDefinition {
     name: String,
@@ -26,27 +27,50 @@ provide let def = (name, callback) => {
 provide let run = (testName) => {
     match(Map.get(testName, tests)) {
         Some(definition) => {
+            let wasSuccessfull = box(true)
+            let errorBuffer = Buffer.make(5)
+
             while(!Stack.isEmpty(definition.assertions)) {
                 let assertion = Option.unwrap(Stack.pop(definition.assertions))
 
                 let result = assertion()
 
-                print(result)
+                if(Option.isSome(result)) {
+                    let error = Option.unwrap(result)
+
+                    print(testName ++ " failed:")
+                    Buffer.addString("\t" ++ error ++ "\n", errorBuffer)
+                }
+                else {
+                    wasSuccessfull := false
+                }
+            }
+
+            if(unbox(wasSuccessfull)) {
+                print(testName ++ " successfull")
+            }
+            else {
+                print(Buffer.toString(errorBuffer))
             }
         },
         None => print(testName ++ " not found")
     }    
 }
 
-provide let assertEq = (state, expected, actual) => {
+let pushAssertion = (state, toCheck, message) => {
     let check = () => {
-        if(expected == actual) {
+        if(toCheck) {
             None()
         }
         else {
-            Some(String.concat(toString(expected), toString(actual)))
+            Some(message)
         }
     }
 
     Stack.push(check, state.assertions)
+}
+
+provide let assertEq = (state, expected, actual) => {
+    pushAssertion(state, expected == actual,
+        "expected " ++ toString(expected) ++ " but got " ++ toString(actual))
 }
