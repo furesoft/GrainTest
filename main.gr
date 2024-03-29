@@ -1,6 +1,12 @@
+module Sandbox
+
 from "./test.gr" include Test
 
 Test.def("This_shouldPass", (test) => {
-    assertEq(test, true, false)
-    assertEq(test, false, false)
+    Test.assertEq(test, true, false)
+    Test.assertEq(test, false, false)
+
+    None()
 })
+
+Test.run("This_shouldPass")

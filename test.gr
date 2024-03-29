@@ -1,38 +1,52 @@
 module Test
 
 from "string" include String
-from "list" include List
+from "stack" include Stack
+from "map" include Map
+from "option" include Option
 
 provide record TestDefinition {
     name: String,
-    assertions: 
+    assertions: Stack.Stack<() => Option<String>>
 }
+
+let tests = Map.make();
 
 provide let def = (name, callback) => { 
     let state = {
         name: name,
-        assertions: []
+        assertions: Stack.make()
     }
 
-    let result = callback(state)
-    
-    let result = match(result) {
-        Ok(v) => "were successfull",
-        Err(e) => String.concat(" failed: ", e)
-    }
+    callback(state)
 
-    print(String.concat(String.concat("Test ", name), result))
+    Map.set(name, state, tests)
+}
+
+provide let run = (testName) => {
+    match(Map.get(testName, tests)) {
+        Some(definition) => {
+            while(!Stack.isEmpty(definition.assertions)) {
+                let assertion = Option.unwrap(Stack.pop(definition.assertions))
+
+                let result = assertion()
+
+                print(result)
+            }
+        },
+        None => print(testName ++ " not found")
+    }    
 }
 
 provide let assertEq = (state, expected, actual) => {
     let check = () => {
         if(expected == actual) {
-            Ok(true)
+            None()
         }
         else {
-            Err("expected != actual")
+            Some(String.concat(toString(expected), toString(actual)))
         }
     }
 
-    Buffer.add(check, state.assertions)
+    Stack.push(check, state.assertions)
 }
