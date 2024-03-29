@@ -3,8 +3,8 @@ module Sandbox
 from "./test.gr" include Test
 
 Test.def("This_shouldPass", (test) => {
-    Test.assertTrue(test, true, false)
-    Test.assertFalse(test, false, false)
+    Test.assertTrue(test, true)
+    Test.assertFalse(test, false)
 })
 
 Test.runAll()
