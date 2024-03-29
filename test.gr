@@ -81,3 +81,11 @@ provide let assertEq = (state, expected, actual) => {
     pushAssertion(state, expected == actual,
         "expected " ++ toString(expected) ++ " but got " ++ toString(actual))
 }
+
+provide let assertTrue = (state, actual) => {
+    pushAssertion(state, actual, "expected to be 'true' but was 'false'")
+}
+
+provide let assertFalse = (state, actual) => {
+    pushAssertion(state, actual, "expected to be 'false' but was 'true'")
+}
