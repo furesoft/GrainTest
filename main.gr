@@ -5,8 +5,6 @@ from "./test.gr" include Test
 Test.def("This_shouldPass", (test) => {
     Test.assertEq(test, true, false)
     Test.assertEq(test, false, false)
-
-    None()
 })
 
-Test.run("This_shouldPass")
+Test.runAll()

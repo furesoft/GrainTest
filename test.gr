@@ -24,37 +24,44 @@ provide let def = (name, callback) => {
     Map.set(name, state, tests)
 }
 
+let runSingleTest = (definition) => { 
+    let wasSuccessfull = box(true)
+    let errorBuffer = Buffer.make(5)
+    let testName = definition.name
+
+    while(!Stack.isEmpty(definition.assertions)) {
+        let assertion = Option.unwrap(Stack.pop(definition.assertions))
+
+        let result = assertion()
+
+        if(Option.isSome(result)) {
+            let error = Option.unwrap(result)
+
+            print(testName ++ " failed:")
+            Buffer.addString("\t" ++ error ++ "\n", errorBuffer)
+        }
+        else {
+            wasSuccessfull := false
+        }
+    }
+
+    if(unbox(wasSuccessfull)) {
+        print(testName ++ " successfull")
+    }
+    else {
+        print(Buffer.toString(errorBuffer))
+    }
+}
+
 provide let run = (testName) => {
     match(Map.get(testName, tests)) {
-        Some(definition) => {
-            let wasSuccessfull = box(true)
-            let errorBuffer = Buffer.make(5)
-
-            while(!Stack.isEmpty(definition.assertions)) {
-                let assertion = Option.unwrap(Stack.pop(definition.assertions))
-
-                let result = assertion()
-
-                if(Option.isSome(result)) {
-                    let error = Option.unwrap(result)
-
-                    print(testName ++ " failed:")
-                    Buffer.addString("\t" ++ error ++ "\n", errorBuffer)
-                }
-                else {
-                    wasSuccessfull := false
-                }
-            }
-
-            if(unbox(wasSuccessfull)) {
-                print(testName ++ " successfull")
-            }
-            else {
-                print(Buffer.toString(errorBuffer))
-            }
-        },
+        Some(definition) => runSingleTest(definition),
         None => print(testName ++ " not found")
-    }    
+    }
+}
+
+provide let runAll = () => {
+    Map.forEach((key, value) => runSingleTest(value), tests)
 }
 
 let pushAssertion = (state, toCheck, message) => {
