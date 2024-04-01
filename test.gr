@@ -5,43 +5,51 @@ from "stack" include Stack
 from "map" include Map
 from "option" include Option
 from "buffer" include Buffer
+from "result" include Result
+
+use Stack.*
 
 provide record TestDefinition {
     name: String,
-    assertions: Stack.Stack<() => Option<String>>
+    assertions: Stack<() => Option<String>>
 }
 
-let tests = Map.make();
+let tests = Map.make()
+
+let currentTestDef = box({
+        name: "",
+        assertions: Stack.make()
+    })
 
 provide let def = (name, callback) => { 
-    let state = {
+    currentTestDef := {
         name: name,
         assertions: Stack.make()
     }
 
-    callback(state)
+    callback()
 
-    Map.set(name, state, tests)
+    Map.set(name, currentTestDef, tests)
 }
 
 let runSingleTest = (definition) => { 
-    let wasSuccessfull = box(true)
+    let wasSuccessfull = box(false)
     let errorBuffer = Buffer.make(5)
-    let testName = definition.name
+    let test = unbox(definition)
+    let testName = test.name
 
-    while(!Stack.isEmpty(definition.assertions)) {
-        let assertion = Option.unwrap(Stack.pop(definition.assertions))
+    while(!Stack.isEmpty(test.assertions)) {
+        let assertion = Option.unwrap(Stack.pop(test.assertions))
 
         let result = assertion()
 
         if(Option.isSome(result)) {
             let error = Option.unwrap(result)
 
-            print(testName ++ " failed:")
             Buffer.addString("\t" ++ error ++ "\n", errorBuffer)
         }
         else {
-            wasSuccessfull := false
+            wasSuccessfull := true
         }
     }
 
@@ -49,6 +57,7 @@ let runSingleTest = (definition) => {
         print(testName ++ " successfull")
     }
     else {
+        print(testName ++ " failed:")
         print(Buffer.toString(errorBuffer))
     }
 }
@@ -64,7 +73,7 @@ provide let runAll = () => {
     Map.forEach((key, value) => runSingleTest(value), tests)
 }
 
-let pushAssertion = (state, toCheck, message) => {
+let pushAssertion = (toCheck, message) => {
     let check = () => {
         if(toCheck) {
             None()
@@ -74,18 +83,22 @@ let pushAssertion = (state, toCheck, message) => {
         }
     }
 
-    Stack.push(check, state.assertions)
+    Stack.push(check, unbox(currentTestDef).assertions)
 }
 
-provide let assertEq = (state, expected, actual) => {
-    pushAssertion(state, expected == actual,
+provide let assertEq = (expected, actual) => {
+    pushAssertion(expected == actual,
         "expected " ++ toString(expected) ++ " but got " ++ toString(actual))
 }
 
-provide let assertTrue = (state, actual) => {
-    pushAssertion(state, actual, "expected to be 'true' but was 'false'")
+provide let assertTrue = (actual) => {
+    pushAssertion(actual, "expected to be 'true' but was 'false'")
 }
 
-provide let assertFalse = (state, actual) => {
-    pushAssertion(state, !actual, "expected to be 'false' but was 'true'")
+provide let assertFalse = (actual) => {
+    pushAssertion(!actual, "expected to be 'false' but was 'true'")
+}
+
+provide let assertOk = (value) => {
+    pushAssertion(Result.isOk(value), "expected to be ok")
 }

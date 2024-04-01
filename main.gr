@@ -2,9 +2,14 @@ module Sandbox
 
 from "./test.gr" include Test
 
-Test.def("This_shouldPass", (test) => {
-    Test.assertTrue(test, true)
-    Test.assertFalse(test, false)
+Test.def("This_shouldPass", () => {
+    Test.assertTrue(true)
+    Test.assertFalse(false)
+})
+
+Test.def("This2_shouldFail", () => {
+    Test.assertTrue(false)
+    Test.assertFalse(true)
 })
 
 Test.runAll()
